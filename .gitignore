@@ -1,0 +1,26 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment Variables & Secrets
+.env
+!.env.example
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Evaluation output reports (generated during execution)
+evaluation_report.json
+evaluation_report.md
+*.log
