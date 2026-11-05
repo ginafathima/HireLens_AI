@@ -3,24 +3,31 @@
 venv/
 ENV/
 
-# Python cache & build
+# Python Cache & Build
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .pytest_cache/
+build/
+dist/
+*.egg-info/
 
 # Environment Variables & Secrets
 .env
 !.env.example
 
-# IDE & Editor settings
+# IDE & Editor Settings
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Evaluation output reports (generated during execution)
+# Generated Evaluation Reports
 evaluation_report.json
 evaluation_report.md
+weak_candidate_report.json
+weak_candidate_report.md
+
+# Log Files
 *.log

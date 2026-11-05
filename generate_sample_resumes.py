@@ -238,3 +238,4 @@ def generate_weak_resume_docx():
 if __name__ == "__main__":
     generate_strong_resume_pdf()
     generate_weak_resume_docx()
+

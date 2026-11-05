@@ -58,7 +58,7 @@ class OpenRouterClient:
             timeout: Request timeout in seconds.
             max_retries: Maximum number of retry attempts per model.
         """
-        self.api_key = api_key or OPENROUTER_API_KEY
+        self.api_key = OPENROUTER_API_KEY if api_key is None else api_key
         self.base_url = (base_url or OPENROUTER_BASE_URL).rstrip("/")
         self.timeout = timeout or OPENROUTER_TIMEOUT
         self.max_retries = max_retries or OPENROUTER_MAX_RETRIES
@@ -68,7 +68,7 @@ class OpenRouterClient:
             {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/HireLens_AI",
+                "HTTP-Referer": "https://github.com/ginafathima/HireLens_AI",
                 "X-Title": "HireLens AI Resume Evaluator",
             }
         )

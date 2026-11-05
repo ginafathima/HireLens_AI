@@ -32,3 +32,4 @@ Academic & Eligibility Criteria:
 - Bachelor's or Master's degree in Computer Science, Data Science, Artificial Intelligence, Mathematics, Information Technology, or related quantitative disciplines.
 - Graduating batch of 2024, 2025, or 2026 (Freshers and final-year students eligible).
 - Strong academic foundation in linear algebra, probability, and algorithms.
+

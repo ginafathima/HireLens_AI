@@ -132,34 +132,6 @@ pip install -r requirements.txt
 
 ---
 
-## 6. Environment Configuration
-
-1. Copy the example configuration to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-2. Open `.env` and configure your OpenRouter API key:
-   ```env
-   # Get a free key from https://openrouter.ai/keys
-   OPENROUTER_API_KEY=sk-or-v1-your-actual-api-key
-
-   # Primary Model (Recommended: Google Gemini 2.0 Flash Lite Free)
-   OPENROUTER_MODEL=google/gemini-2.0-flash-lite-001
-
-   # Fallback models attempted automatically on 429 rate limit or outage
-   OPENROUTER_FALLBACK_MODELS=meta-llama/llama-3.3-70b-instruct:free,google/gemma-2-9b-it:free,mistralai/mistral-7b-instruct:free
-
-   # Request Timeout in seconds
-   OPENROUTER_TIMEOUT=45
-
-   # Retry attempts per model
-   OPENROUTER_MAX_RETRIES=3
-   ```
-
-> **Security Note:** `.env` is listed in `.gitignore` and is never committed to source control.
-
----
-
 ## 7. Execution Guide
 
 ### Evaluating the Strong Fit Candidate (PDF)
@@ -181,129 +153,164 @@ python main.py --resume sample_resumes/candidate_weak.docx --jd jd.txt --output 
 
 ## 8. OpenRouter Free Model Selection & Tradeoffs
 
-HireLens AI defaults to `google/gemini-2.0-flash-lite-001` (or `meta-llama/llama-3.3-70b-instruct:free`) on OpenRouter for several strategic reasons:
+HireLens AI uses OpenRouter to access free AI models for resume evaluation. The system is configured with a primary model and a fallback model to improve reliability.
 
-1. **Structured JSON Adherence:** Strong adherence to `response_format: {"type": "json_object"}`, avoiding schema drift.
-2. **Context Efficiency:** Lightweight token consumption while maintaining deep technical comprehension of Python libraries and graduation criteria.
-3. **Low Latency & High Rate Limits:** Offers quick evaluation cycles without hitting aggressive throttling.
-4. **Fallback Resilience:** If the primary endpoint experiences transient server errors (HTTP 500/502/503) or rate limits (HTTP 429), our client automatically rolls over to `meta-llama/llama-3.3-70b-instruct:free`, `google/gemma-2-9b-it:free`, or `mistralai/mistral-7b-instruct:free`.
+### 1. Primary Model
+
+`google/gemma-4-26b-a4b-it:free`
+
+This is the primary model used to analyse candidate resumes, identify relevant skills, evaluate experience, and generate structured evaluation results.
+
+### 2. Fallback Model
+
+`nvidia/nemotron-3.5-super-vl:free`
+
+If the primary model becomes unavailable or encounters rate limits, the system can automatically attempt evaluation using the fallback model.
+
+### 3. Retry Mechanism
+
+The system is configured to retry failed API requests up to 3 times. This helps handle temporary API errors and rate limits (HTTP 429).
+
+The retry delay increases between attempts to avoid sending repeated requests too quickly.
+
+### 4. Timeout Configuration
+
+The API request timeout is set to 60 seconds. This allows sufficient time for the AI model to process the resume and generate its evaluation.
+
+### 5. Trade-offs and Limitations
+
+* **Rate Limits:** Free models may have usage limits and can return HTTP 429 errors.
+* **Model Availability:** A selected model may occasionally become unavailable.
+* **Response Consistency:** Different AI models may produce slightly different evaluation results.
+* **Fallback Resilience:** The fallback model helps the system continue evaluation when the primary model cannot respond successfully.
+
+### 6. Configuration
+
+The model settings are maintained in the `.env` file instead of being hardcoded into the application. This makes it easier to change models and API settings without modifying the source code.
 
 ---
 
 ## 9. Example Output
 
-### Console Dashboard
-```
+### Console Dashboard – Strong Candidate
+
+The following is an example of the successful evaluation performed using the sample PDF resume.
+
+```text
 ============================================================================
   HIRELENS AI - CANDIDATE EVALUATION DASHBOARD
 ============================================================================
   Candidate Name:       Aarav Sharma
-  Overall Match Score:  87/100
+  Overall Match Score:  91/100
   Fit Status:           Strong Match
   TF-IDF Pre-Score:     22.4% lexical overlap
 ----------------------------------------------------------------------------
   CATEGORY                       WEIGHT     SCORE      STATUS
 ----------------------------------------------------------------------------
-  Core Skills                    30%        90         [EXCELLENT]
-  Projects And Assignments       25%        85         [EXCELLENT]
-  Experience Internships         15%        80         [EXCELLENT]
-  Academic Qualification         15%        95         [EXCELLENT]
-  Resume Quality                 15%        85         [EXCELLENT]
+  Core Skills                    30%        90
+  Projects And Assignments       25%        92
+  Experience Internships         15%        85
+  Academic Qualification         15%        95
+  Resume Quality                 15%        92
 ----------------------------------------------------------------------------
   KEY STRENGTHS:
-   + Demonstrated hands-on experience with Python 3.11, pypdf, and python-docx.
-   + Built and deployed DocuIntellect end-to-end with FastAPI and RAG architecture.
-   + Strong academic CS pedigree (KTU 2025 batch, CGPA 8.85/10.0).
+   + Strengths identified from the candidate's resume.
 
   SKILL GAPS & AREAS FOR IMPROVEMENT:
-   - Limited exposure to local inference runtimes (e.g., Ollama).
-   - No direct experience listed with Django/HTMX.
+   - Skill gaps identified by the AI evaluation.
 
   HIRING MANAGER RECOMMENDATION:
-   >> Advance to technical interview round with a focus on embeddings and RAG design.
+   >> Recommendation generated based on the candidate evaluation.
 ============================================================================
+
 [SUCCESS] Report written to: evaluation_report.json
 ```
 
-### Generated `evaluation_report.json`
-```json
-{
-  "candidate_name": "Aarav Sharma",
-  "overall_match_score": 87,
-  "fit_status": "Strong Match",
-  "category_scores": {
-    "core_skills": {
-      "score": 90,
-      "weight": "30%",
-      "justification": "Exceptional match with Python, pypdf, python-docx, FastAPI, and scikit-learn."
-    },
-    "projects_and_assignments": {
-      "score": 85,
-      "weight": "25%",
-      "justification": "DocuIntellect project shows applied ML, vector indexing with ChromaDB, and high test coverage."
-    },
-    "experience_internships": {
-      "score": 80,
-      "weight": "15%",
-      "justification": "Completed a 6-month internship in applied AI engineering focusing on document parsing."
-    },
-    "academic_qualification": {
-      "score": 95,
-      "weight": "15%",
-      "justification": "B.Tech in Computer Science (2025 batch) with high CGPA (8.85/10) and relevant coursework."
-    },
-    "resume_quality": {
-      "score": 85,
-      "weight": "15%",
-      "justification": "Clean bullet points with quantifiable impact metrics (34% token reduction, 15k documents)."
-    }
-  },
-  "key_strengths": [
-    "Demonstrated hands-on experience with Python 3.11, pypdf, and python-docx.",
-    "Built and deployed DocuIntellect end-to-end with FastAPI and RAG architecture.",
-    "Strong academic CS pedigree (KTU 2025 batch, CGPA 8.85/10.0)."
-  ],
-  "skill_gaps": [
-    "Limited exposure to local inference runtimes (e.g., Ollama).",
-    "No direct experience listed with Django/HTMX."
-  ],
-  "hiring_manager_recommendation": "Advance to technical interview round with a focus on embeddings and RAG design."
-}
+### Weak Candidate Evaluation
+
+The system was also tested using a DOCX resume belonging to a weak candidate.
+
+```text
+Candidate Name:       Rohan Patel
+Overall Match Score:  4/100
+Fit Status:           Weak Match
+TF-IDF Pre-Score:     2.5% lexical overlap
+
+Category Scores:
+Core Skills                    0
+Projects And Assignments       0
+Experience Internships         0
+Academic Qualification         0
+Resume Quality                 30
+
+[SUCCESS] Report written to: weak_candidate_report.json
 ```
+
+### Generated JSON Reports
+
+The application generates structured JSON evaluation reports automatically.
+
+* `evaluation_report.json` – Strong candidate evaluation.
+* `weak_candidate_report.json` – Weak candidate evaluation.
+
+These reports contain candidate information, category scores, weights, justifications, key strengths, skill gaps, and the hiring manager recommendation.
+
+The actual generated JSON files can be inspected to view the complete evaluation results.
 
 ---
 
 ## 10. Automated Testing & Quality Verification
 
 ### Running the Test Suite
-The project contains 17 comprehensive automated unit and integration tests covering all critical components:
 
-```bash
-pytest tests/ -v
+The project contains 17 automated tests covering the major application components.
+
+Run the following command:
+
+```powershell
+python -m pytest -v
 ```
 
-### Test Coverage Highlights:
-* `test_parsers.py`: Validates extraction accuracy from both PDF and DOCX, and confirms appropriate exception handling for missing or unsupported formats.
-* `test_preprocessor.py`: Verifies Unicode normalization, whitespace collapsing, token estimation heuristics, paragraph-aware truncation, and TF-IDF discrimination.
-* `test_evaluator.py`: Tests the mathematical calculation of deterministic scores, Pydantic field validation, score clamping, and JSON report persistence.
-* `test_openrouter_client.py`: Verifies markdown code fence cleaning, missing API key detection, HTTP 429 exponential backoff retries, and fallback model triggering.
+### Test Coverage Highlights
+
+* `test_parsers.py`: Tests PDF and DOCX text extraction and error handling.
+* `test_preprocessor.py`: Tests text cleaning, token estimation, truncation, and TF-IDF similarity.
+* `test_evaluator.py`: Tests weighted score calculation, Pydantic validation, score limits, and JSON report generation.
+* `test_openrouter_client.py`: Tests API key validation, response cleaning, retry handling, and fallback model behaviour.
+
+### Test Results
+
+```text
+17 passed
+```
+
+All 17 automated tests passed successfully.
 
 ### Pylint Verification
-Run Pylint across the entire codebase:
-```bash
-pylint src/ main.py tests/
+
+Run the following command:
+
+```powershell
+python -m pylint src main.py
 ```
 
-**Official Pylint Output:**
-```
--------------------------------------------------------------------
+**Pylint Output:**
+
+```text
 Your code has been rated at 10.00/10
 ```
+
+This score was achieved for the `src` package and `main.py`.
 
 ---
 
 ## 11. AI Tooling & Development Disclosure
 
-In accordance with Section 4 and Section 8 of the assessment brief:
-* **Development Assistant:** Antigravity (Powered by Google Gemini 3.8 Flash High) was used as an AI pair programmer and architecture consultant during development.
-* **Engineering Principles Applied:** All prompts, data structures, error recovery cascades, and mathematical scoring logic were engineered modularly and manually reviewed for strict adherence to PEP 8, deterministic accuracy, and token economics.
+AI-assisted development tools were used during the development of HireLens AI.
+
+* **Development Assistant:** Antigravity and ChatGPT were used for coding assistance, debugging, implementation guidance, and project documentation.
+* **Engineering Principles:** The application was organized into separate modules to improve maintainability and readability.
+* **Validation:** Pydantic was used for structured data validation.
+* **Deterministic Scoring:** The final weighted candidate score is calculated in Python rather than relying on the AI model's calculated score.
+* **Testing:** Automated tests and Pylint were used to verify the application.
+* **API Security:** The OpenRouter API key is stored in the `.env` file and excluded from Git using `.gitignore`.
